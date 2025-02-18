@@ -39,6 +39,18 @@ func main() {
 				},
 			},
 			{
+				Name:  "absorb",
+				Usage: "append files into a box (box append destination.box [file1 file2 ...]) and remove them afterwards",
+				Action: func(cCtx *cli.Context) error {
+					destFilename := cCtx.Args().First()
+					filenames := cCtx.Args().Tail()
+					if len(filenames) == 0 {
+						return fmt.Errorf("the source files are not specified")
+					}
+					return box.Absorb(destFilename, filenames)
+				},
+			},
+			{
 				Name:  "extract",
 				Usage: "extract files from a box file (box extract source.box destination_directory)",
 				Action: func(cCtx *cli.Context) error {

@@ -70,3 +70,16 @@ func Append(destFilename string, filenames []string) error {
 	}
 	return nil
 }
+
+
+func Absorb(destFilename string, filenames []string) error {
+	if err := Append(destFilename, filenames); err != nil {
+		return err
+	}
+	for _, filename := range filenames {
+		if err := os.Remove(filename); err != nil {
+			return fmt.Errorf("remove %s: %w", filename, err)
+		}
+	}
+	return nil
+}
