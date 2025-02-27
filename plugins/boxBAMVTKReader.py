@@ -44,6 +44,12 @@ def parse_bam_header(header):
     }
     return d
 
+def level_suffix_from_bam_filename(name):
+    sp = name.replace('.', '_').split('_')
+    if sp[2][-1].isalpha():
+        return sp[2][-1]
+    return None
+
 def get_dimensions(file_content):
     reader = vtk.vtkDataSetReader()
     reader.ReadFromInputStringOn()
@@ -66,14 +72,22 @@ class boxBAMVTKReader(VTKPythonAlgorithmBase):
             nOutputPorts=1,
             outputType="vtkStructuredPoints",
         )
+        self.members = []
         self._timesteps = []
-
+        self._level_suffix = None
 
     @smproperty.stringvector(name="FileName")
     @smdomain.filelist()
     @smhint.filechooser(extensions="box", file_description="box files")
     def SetFileName(self, value):
         self._filename = value
+        self.Modified()
+
+    @smproperty.stringvector(
+        name="Level Suffix", default_values=[""]
+    )
+    def SetLevelSuffix(self, value):
+        self._level_suffix = value
         self.Modified()
 
     @smproperty.doublevector(
@@ -94,7 +108,13 @@ class boxBAMVTKReader(VTKPythonAlgorithmBase):
 
         self.tar = tarfile.open(self._filename)
         members = self.tar.getmembers()
+        self.members = []
         for member in members:
+            level_suffix = level_suffix_from_bam_filename(member.name)
+            if level_suffix != self._level_suffix:
+                continue
+            self.members += [member]
+
             # Header
             file_compressed = self.tar.extractfile(member)
             decompressor = zstandard.ZstdDecompressor()
@@ -127,7 +147,7 @@ class boxBAMVTKReader(VTKPythonAlgorithmBase):
 
         time = get_timestep(self)
         i = self._timesteps.index(time)
-        member = self.tar.getmembers()[i]
+        member = self.members[i]
         decompressor = zstandard.ZstdDecompressor()
         file_content = decompressor.stream_reader(self.tar.extractfile(member)).read()
 
