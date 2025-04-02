@@ -146,7 +146,12 @@ class boxBAMVTKReader(VTKPythonAlgorithmBase):
         output = dsa.WrapDataObject(vtkStructuredPoints.GetData(outInfo))
 
         time = get_timestep(self)
-        i = self._timesteps.index(time)
+        try:
+            i = self._timesteps.index(time)
+        except:
+            reader = vtk.vtkDataSetReader()
+            output.ShallowCopy(reader.GetOutput())
+            return 1
         member = self.members[i]
         decompressor = zstandard.ZstdDecompressor()
         file_content = decompressor.stream_reader(self.tar.extractfile(member)).read()
