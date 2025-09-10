@@ -135,8 +135,6 @@ class boxBAMVTKReader(VTKPythonAlgorithmBase):
 
         util.SetOutputWholeExtent(self, [0, whole_extent[0], 0, whole_extent[1], 0, whole_extent[2]])
 
-
-
         set_timesteps(self, self._timesteps)
 
         return 1
@@ -149,9 +147,7 @@ class boxBAMVTKReader(VTKPythonAlgorithmBase):
         try:
             i = self._timesteps.index(time)
         except:
-            reader = vtk.vtkDataSetReader()
-            output.ShallowCopy(reader.GetOutput())
-            return 1
+            return -1
         member = self.members[i]
         decompressor = zstandard.ZstdDecompressor()
         file_content = decompressor.stream_reader(self.tar.extractfile(member)).read()
